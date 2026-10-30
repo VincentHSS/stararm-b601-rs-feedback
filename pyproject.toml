@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stararm-rs-feedback"
+version = "0.5.1"
+description = "StarArm 102 load damping and stall holding for Seeed B601-RS LeRobot teleoperation"
+requires-python = ">=3.10"
+dependencies = ["python-can>=4.2,<5"]
+
+[project.optional-dependencies]
+calibration = ["numpy>=1.24,<3"]
+
+[project.scripts]
+stararm-rs-teleoperate = "stararm_rs_feedback.launcher:main"
+
+[tool.setuptools.packages.find]
+include = ["stararm_rs_feedback*"]
+
+[tool.setuptools.package-data]
+stararm_rs_feedback = ["assets/*.urdf", "assets/LICENSE-Seeed.txt", "web/**/*", "web/*.html", "web/*.css", "web/*.js"]

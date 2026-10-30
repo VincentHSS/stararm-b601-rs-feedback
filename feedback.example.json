@@ -1,0 +1,47 @@
+{
+  "torque_reference_nm": [
+    6,
+    6,
+    6,
+    1.5,
+    1.5,
+    1.5,
+    1
+  ],
+  "torque_floor_nm": [
+    0.2,
+    0.2,
+    0.2,
+    0.1,
+    0.1,
+    0.1,
+    0.1
+  ],
+  "torque_bias_nm": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "torque_filter_s": 0.12,
+  "power_min_mw": 1,
+  "power_max_mw": 600,
+  "power_deadband_mw": 20,
+  "hold_mw": 1500,
+  "refresh_s": 0.5,
+  "lock_deg": 20,
+  "release_deg": 8,
+  "window_s": 0.5,
+  "confirm_windows": 2,
+  "minimum_load_ratio": 0.35,
+  "stalled_motion_deg": 0.5,
+  "convergence_deg": 1,
+  "release_stable_s": 0.4,
+  "feedback_timeout_s": 0.25,
+  "startup_timeout_s": 1,
+  "max_temperature_c": 80,
+  "leader_timeout_s": 0.25
+}

@@ -1,0 +1,75 @@
+{
+  "format": "stararm-rs-dynamic-v3",
+  "experimental": true,
+  "upright_stock_gripper": true,
+  "robot_signature": "0000000000000000000000000000000000000000000000000000000000000000",
+  "model_sha256": "2012b5aa3b58878109cb9e3c5deef919a87bd09a67d561662b2904a30dd4397e",
+  "policy": {
+    "default_power_mw": 1200,
+    "allowed_power_mw": [
+      400,
+      1500
+    ],
+    "active_joint_indices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      6
+    ],
+    "deadzone_nm": [
+      0.7,
+      1.0,
+      1.0,
+      0.6,
+      0.35,
+      0.0,
+      0.35
+    ],
+    "moving_margin_nm": [
+      0.15,
+      0.4,
+      0.6,
+      0.2,
+      0.15,
+      0.0,
+      0.08
+    ],
+    "excess_full_scale_nm": [
+      1.0,
+      3.0,
+      5.0,
+      3.0,
+      1.0,
+      1.0,
+      0.25
+    ],
+    "arm_motion_margin_per_axis": true,
+    "arm_motion_scale_rad_s": 0.25,
+    "joint_limit_margin_deg": 2.0,
+    "joint_limit_rearm_margin_deg": 3.0,
+    "home_model_guard_enter_deg": 3.0,
+    "home_model_guard_exit_deg": 5.0,
+    "leader_monitor_retries": 1,
+    "gripper_signal": "signed_motor_torque_nm",
+    "gripper_independent_from_arm_estimator": true,
+    "gripper_motion_scale_rad_s": 0.5,
+    "gripper_acceleration_margin_nm_s2": 0.01,
+    "gripper_max_speed_rad_s": 6.0,
+    "gripper_max_acceleration_rad_s2": 60.0,
+    "velocity_filter_s": 0.06,
+    "acceleration_filter_s": 0.1,
+    "residual_filter_s": 0.12,
+    "confirmation_s": 0.1,
+    "power_filter_s": 0.06,
+    "startup_s": 0.25,
+    "source_age_s": 0.15,
+    "gap_s": 0.25,
+    "max_speed_rad_s": 2.0,
+    "max_acceleration_rad_s2": 25.0,
+    "power_rise_mw_s": 5000.0,
+    "power_fall_mw_s": 10000.0
+  },
+  "limitation": "Template only. Generate a local bound spec with stararm_rs_feedback.bind using your existing follower calibration; no physical calibration is performed."
+}

@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+data/
+.env
+.env.*
+*.log
+*.csv
+feedback.rs-dynamic.json
+feedback.rs-trial.json
+*calibration*.json
