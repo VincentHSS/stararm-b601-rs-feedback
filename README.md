@@ -1,8 +1,14 @@
 # StarArm 102 + B601-RS 动态力反馈与本地网页
 
-适配 **StarArm 102 Leader + Seeed reBot B601 RobStride 从臂**，复用 Seeed LeRobot 官方设备插件。0.5.2 提供随当前负载变化的主臂阻尼、本地网页调参、RS 3D 姿态、七轴扭矩/Iq 电流及 Leader 请求状态。
+适配 **StarArm 102 Leader + Seeed reBot B601 RobStride 从臂**，复用 Seeed LeRobot 官方设备插件。0.5.3 提供随当前负载变化的主臂阻尼、本地网页调参、RS 3D 姿态、图上七轴扭矩标注与变色、Iq 电流及 Leader 请求状态。
 
 J1–J5 和夹爪参与普通动态阻尼，J6 普通阻尼关闭；默认每轴上限 1200 mW，可选 400–1500 mW。J1 只按自身回转负载判断。堵转 HOLD 独立，可对全部关节请求 1500 mW。这里的 mW 是 Leader 请求功率，不是实测阻力；扭矩/电流不能直接换算公斤。
+
+## 0.5.3 图上受力与新版工作台
+
+浅色工作台放大 3D 模型，J1–J7 直接显示有符号扭矩（N·m），用绿→黄→红表示幅值，并对对应连杆着色；标注跟随姿态和视角，点击可联动关节详情。支持切换电机扭矩 / 模型剩余力矩和调整颜色量程，失效或过期数据变灰并显示 `—`，回放明确标为历史数据。颜色量程只影响显示，不是额定/安全限值；反馈扭矩也不是末端接触力。详见 [网页说明](WEB.md)。
+
+本次仅更新网页及显示版本，机械臂控制策略不变。请从源码安装 0.5.3；`dist/` 中历史 wheel 不含此次界面更新。
 
 ## 0.5.2 持续运动时保持阻尼计算
 
@@ -32,7 +38,7 @@ python -m pip install --no-deps dist/motorbridge_smart_servo-0.0.4+rsfix1-*.whl
 python -m pip install --no-deps .
 ```
 
-所附主臂 SDK wheel 适用于 Linux x86_64、glibc >=2.34、Python >=3.9；修复已接受零度反复被拒绝的问题，仍保留校验和、缺包及零跳变确认。其他平台见 [sdk-fix/README.md](sdk-fix/README.md)。设备插件仍由教程环境提供；如缺 python-can，单独安装 `python-can>=4.2,<5`。本包 0.5.2 从当前源码安装；`dist/` 内旧 0.5.1 wheel 没有本次改动。
+所附主臂 SDK wheel 适用于 Linux x86_64、glibc >=2.34、Python >=3.9；修复已接受零度反复被拒绝的问题，仍保留校验和、缺包及零跳变确认。其他平台见 [sdk-fix/README.md](sdk-fix/README.md)。设备插件仍由教程环境提供；如缺 python-can，单独安装 `python-can>=4.2,<5`。本包 0.5.3 从当前源码安装；`dist/` 内旧 0.5.1 wheel 没有本次改动。
 
 使用的外置设备类型为 `rebot_arm_102_leader` 与 `seeed_b601_rs_follower`，不适用于 LeRobot 内置的同名近似插件或 B601-DM。
 

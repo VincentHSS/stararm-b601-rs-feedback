@@ -181,7 +181,7 @@ def make_handler(app):
             if not self.local_request():self.send(403,{'error':'仅允许本机访问'});return
             path=urlsplit(self.path).path
             if path=='/api/bootstrap':
-                self.send(200,dict(token=app.token,settings=app.settings(),defaults=defaults(),scalars=SCALARS,arrays=ARRAYS,version='0.5.2'));return
+                self.send(200,dict(token=app.token,settings=app.settings(),defaults=defaults(),scalars=SCALARS,arrays=ARRAYS,version='0.5.3'));return
             if path=='/api/state':self.send(200,app.status());return
             if path=='/api/log':self.send(200,{'text':app.logs()});return
             if path=='/api/replay':
