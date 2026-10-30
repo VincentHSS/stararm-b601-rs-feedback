@@ -14,7 +14,6 @@ const forceElements=[],forceMarkers=[],forceAnchors=[];
 function selectJoint(index){
   selected=index;
   for(const row of $('jointRows').rows){const active=Number(row.dataset.joint)===index;row.classList.toggle('selected',active);row.setAttribute('aria-selected',String(active));}
-  document.querySelectorAll('[data-pose]').forEach(button=>button.setAttribute('aria-pressed',String(Number(button.dataset.pose)===index)));
   forceElements.forEach((item,i)=>{item.label.classList.toggle('selected',i===index);item.label.setAttribute('aria-pressed',String(i===index));});
   updateDetail();highlightModel();drawTrend();
 }
@@ -25,11 +24,9 @@ async function api(path,body){
 }
 function markDirty(){dirty=true;$('dirty').textContent='未保存';$('dirty').className='tag replay';}
 function buildTables(){
-  $('jointRows').innerHTML=names.map((n,i)=>`<tr data-joint="${i}" class="${i===selected?'selected':''}"><td><div class="joint-name"><span style="background:${colors[i]}"></span><div>J${i+1}<small>${n}</small></div></div></td><td id="pos${i}">—</td><td id="tau${i}">—</td><td id="cur${i}" title="RS iqf 滤波电流，约 2.86 Hz">—</td><td><div class="power"><span id="mode${i}" class="mode UNKNOWN">—</span><span id="power${i}" class="pval">—</span></div><div class="powerbar"><i id="bar${i}" style="width:0%"></i></div></td></tr>`).join('');
-  $('poseStrip').innerHTML=names.map((_,i)=>`<button data-pose="${i}" aria-label="选择 J${i+1} ${names[i]}" aria-pressed="${i===selected}">J${i+1}<b id="pose${i}">—</b></button>`).join('');
+  $('jointRows').innerHTML=names.map((n,i)=>`<tr data-joint="${i}" class="${i===selected?'selected':''}"><td><div class="joint-name"><span style="background:${colors[i]}"></span><div>J${i+1}<small>${n}</small></div></div></td><td id="pos${i}">—</td><td id="cur${i}" title="RS iqf 滤波电流，约 2.86 Hz">—</td><td><div class="power"><span id="mode${i}" class="mode UNKNOWN">—</span><span id="power${i}" class="pval">—</span></div><div class="powerbar"><i id="bar${i}" style="width:0%"></i></div></td></tr>`).join('');
   $('legend').innerHTML=colors.map((c,i)=>`<span><i style="background:${c}"></i>J${i+1}</span>`).join('');
   for(const tr of $('jointRows').rows){tr.tabIndex=0;tr.setAttribute('aria-selected',String(Number(tr.dataset.joint)===selected));tr.addEventListener('click',()=>selectJoint(Number(tr.dataset.joint)));tr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectJoint(Number(tr.dataset.joint));}});}
-  document.querySelectorAll('[data-pose]').forEach(button=>button.onclick=()=>selectJoint(Number(button.dataset.pose)));
   names.forEach((name,i)=>{
     const label=document.createElement('button');label.className='force-label unavailable';label.setAttribute('aria-pressed',String(i===selected));
     label.innerHTML=`<span><span class="force-axis">J${i+1}</span><span class="force-level">等待</span></span><span><b>—</b><em>N·m</em></span>`;
@@ -86,7 +83,7 @@ function renderTelemetry(frame,source,fresh=true){
   latest=frame;forceFresh=fresh;forceSource=source;$('source').textContent=source==='replay'?'日志回放 · 非实时':fresh?'实时 CAN':'数据已过期';$('source').className='tag '+(source==='replay'?'replay':fresh?'live':'replay');
   const joints=frame.joints||[];let max=-1,axis=0,active=0;
   Array.from({length:7},(_,i)=>joints[i]||{}).forEach((j,i)=>{
-    $('pos'+i).textContent=fmt(j.motor_pos_deg,1);$('pose'+i).textContent=fmt(j.motor_pos_deg,1)+'°';$('tau'+i).textContent=fmt(j.torque_nm);$('cur'+i).textContent=fresh?fmt(j.current_a):'—';
+    $('pos'+i).textContent=fmt(j.motor_pos_deg,1);$('cur'+i).textContent=fresh?fmt(j.current_a):'—';
     const mode=fresh?j.leader_mode:'UNKNOWN';$('mode'+i).textContent=mode==='UNKNOWN'?'过期':mode;$('mode'+i).className='mode '+mode;
     $('power'+i).textContent=fresh?fmt(j.leader_power_mw,0):'—';$('bar'+i).style.width=fresh?`${Math.min(100,(j.leader_power_mw||0)/1500*100)}%`:'0%';
     if(finite(j.torque_nm)&&Math.abs(j.torque_nm)>max){max=Math.abs(j.torque_nm);axis=i;}if(j.leader_mode==='DAMPING'&&j.leader_power_mw>0)active++;
@@ -101,7 +98,7 @@ function renderTelemetry(frame,source,fresh=true){
 }
 function clearTelemetry(){
   latest=null;forceFresh=false;updateForces();updateDetail();$('source').textContent='等待数据';$('source').className='tag';$('activeCount').textContent='—';$('outputDetail').textContent='等待反馈数据';$('maxTorque').textContent='—';$('maxTorqueJoint').textContent='RS 电机反馈值';
-  for(let i=0;i<7;i++){for(const key of ['pos','tau','cur','power'])$(key+i).textContent='—';$('pose'+i).textContent='—';$('mode'+i).textContent='—';$('mode'+i).className='mode UNKNOWN';$('bar'+i).style.width='0%';}
+  for(let i=0;i<7;i++){for(const key of ['pos','cur','power'])$(key+i).textContent='—';$('mode'+i).textContent='—';$('mode'+i).className='mode UNKNOWN';$('bar'+i).style.width='0%';}
 }
 function renderStatus(data){
   latestStatus=data;networkFailed=false;setButtons();if(replay)return;
@@ -214,7 +211,7 @@ function positionForceLabels(){
   }
 }
 async function init(){
-  buildTables();drawTrend();initModel();
+  buildTables();drawTrend();new ResizeObserver(drawTrend).observe($('trend'));initModel();
   try{boot=await api('/api/bootstrap');token=boot.token;settings=boot.settings;$('version').textContent='v'+boot.version;buildParams();poll();}
   catch(e){networkFailed=true;setButtons();notice('网页初始化失败：'+e.message,'error');}
 }
