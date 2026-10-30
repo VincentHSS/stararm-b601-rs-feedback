@@ -210,22 +210,54 @@ class DynamicTests(unittest.TestCase):
                 previous=p
             self.assertEqual(previous,1500)
 
-    def test_gap_speed_and_source_age_clear_arm_output(self):
-        for mode in ('gap','speed','stale','leader'):
+    def test_gap_and_source_age_still_clear_arm_output(self):
+        for mode in ('gap','stale','leader'):
             with self.subTest(mode=mode):
                 o=DynamicObserver(copy.deepcopy(LIMITS))
                 for j in range(101):q,v,tau=self.feed(o,j*.02)
                 self.assertTrue(any(o.loads))
                 now=102.02;received=None
                 if mode=='gap':now=103.
-                if mode=='speed':v[2]=3.
                 if mode=='stale':received=[now-.16]*7
                 if mode=='leader':o.invalidate('Leader feedback gap')
                 o.update(q,v,tau,now,received_at=received)
                 self.assertEqual(o.loads,[0.]*7)
 
-    def test_arm_limit_speed_and_jump_do_not_reset_gripper_load(self):
-        for mode in ('limit','speed','jump'):
+    def test_motor_speed_spikes_do_not_clear_loaded_damping_or_restart_warmup(self):
+        # 最新实测日志中，单个 RS 速度值略超过 2rad/s 会清零全部臂部。
+        # 这里反复注入越界速度，验证输出连续且仍受各轴功率上限约束。
+        o=DynamicObserver(copy.deepcopy(LIMITS),1500)
+        q=list(Q);tau=o.model.evaluate(q,[0.]*6,[0.]*6)+[0.]
+        for i in (0,1,2,3,4):tau[i]+=20.
+        for j in range(101):o.update(q,[0.]*7,tau,100+j*.02)
+        started=o.started
+        previous=o.ordinary_power_mw[:]
+        for j in range(1,61):
+            v=[0.]*7
+            if j%4==0:v[2]=2.2 if j%8==0 else -3.
+            o.update(q,v,tau,102+j*.02)
+            self.assertTrue(o.valid)
+            self.assertEqual(o.started,started)
+            self.assertEqual(o.ordinary_power_mw,previous)
+            self.assertTrue(all(0<=p<=1500 for p in o.ordinary_power_mw))
+
+    def test_motion_range_reset_can_be_explicitly_restored(self):
+        for mode in ('speed','acceleration'):
+            with self.subTest(mode=mode),patch.dict(POLICY,arm_motion_range_reset=True):
+                o=DynamicObserver(copy.deepcopy(LIMITS))
+                q=list(Q);tau=o.model.evaluate(q,[0.]*6,[0.]*6)+[0.];tau[2]+=5.
+                for j in range(101):o.update(q,[0.]*7,tau,100+j*.02)
+                self.assertGreater(o.ordinary_power_mw[2],400)
+                v=[0.]*7
+                if mode=='speed':v[2]=3.
+                else:o.acceleration[2]=100.
+                o.update(q,v,tau,102.02)
+                self.assertFalse(o.valid)
+                self.assertEqual(o.ordinary_power_mw[:6],[0]*6)
+                self.assertIn('motion exceeds',o.status)
+
+    def test_arm_limit_and_jump_do_not_reset_gripper_load(self):
+        for mode in ('limit','jump'):
             with self.subTest(mode=mode):
                 o=DynamicObserver(copy.deepcopy(LIMITS))
                 for j in range(101):
@@ -233,7 +265,6 @@ class DynamicTests(unittest.TestCase):
                     o.update(q,v,tau,100+j*.02)
                 self.assertGreater(o.ordinary_power_mw[6],1000)
                 if mode=='limit':q[1]=0.
-                if mode=='speed':v[2]=3.
                 if mode=='jump':q[2]+=.5
                 o.update(q,v,tau,102.02)
                 self.assertFalse(o.valid)
