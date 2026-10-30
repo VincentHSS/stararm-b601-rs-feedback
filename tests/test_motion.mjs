@@ -7,7 +7,7 @@ globalThis.matchMedia=()=>({get matches(){return reduced;}});
 globalThis.getComputedStyle=()=>({opacity:'1',marginBottom:'10px'});
 const pending=[];
 function element(height=100){
-  return {hidden:false,inert:false,style:{removeProperty(key){delete this[key];}},
+  return {hidden:false,inert:false,attrs:{},setAttribute(key,value){this.attrs[key]=value;},removeAttribute(key){delete this.attrs[key];},getAttribute(key){return this.attrs[key]??null;},style:{removeProperty(key){delete this[key];}},
     getBoundingClientRect(){return {height:this.hidden?0:height};},
     animate(frames,options){
       let resolve,reject;
@@ -32,6 +32,16 @@ const closing=motion.show(panel,false);
 const reversed=motion.show(panel,true);pending.at(-1).finish();await Promise.all([closing,reversed]);
 assert.equal(panel.hidden,false,'rapid hide/show must preserve the latest intent');
 assert.equal(panel.inert,false);
+
+// SVG's hidden property does not hide its rendering; the attribute must be set.
+const svg=element();
+const svgExit=motion.show(svg,false);pending.at(-1).finish();await svgExit;
+assert.equal(svg.getAttribute('hidden'),'','SVG exit must set the actual hidden attribute');
+const svgEnter=motion.show(svg,true);pending.at(-1).finish();await svgEnter;
+assert.equal(svg.getAttribute('hidden'),null);
+const svgClose=motion.show(svg,false),svgReopen=motion.show(svg,true);
+pending.at(-1).finish();await Promise.all([svgClose,svgReopen]);
+assert.equal(svg.getAttribute('hidden'),null,'reversing an SVG exit must keep the overlay visible');
 
 reduced=true;const count=pending.length;
 await motion.show(panel,false);assert.equal(panel.hidden,true);

@@ -4,6 +4,11 @@ const preference = matchMedia('(prefers-reduced-motion: reduce)');
 export const reducedMotion = () => preference.matches;
 export const EASE = 'cubic-bezier(.22,1,.36,1)';
 const active = new WeakMap();
+function setHidden(element, hidden) {
+  // SVGElement.hidden is not an HTML hidden-attribute reflector.
+  element.hidden=hidden;
+  if(hidden)element.setAttribute('hidden','');else element.removeAttribute('hidden');
+}
 
 export function animate(element, frames, options = {}) {
   if (!element || reducedMotion()) return null;
@@ -23,11 +28,11 @@ export async function show(element, visible, {collapse = false, duration = 240} 
   const endMargin = parseFloat(getComputedStyle(element).marginBottom)||0;
   const opacity = previous ? getComputedStyle(element).opacity : visible ? 0 : 1;
   previous?.cancel();
-  element.hidden = false;
+  setHidden(element,false);
   element.inert = !visible;
   if (visible) element.style.removeProperty('height');
   const endHeight = element.getBoundingClientRect().height;
-  if (reducedMotion()) {element.hidden=!visible;element.inert=!visible;return;}
+  if (reducedMotion()) {setHidden(element,!visible);element.inert=!visible;return;}
   const frames = collapse
     ? [{height:`${visible ? startHeight : endHeight}px`,marginBottom:`${visible?0:endMargin}px`,opacity},{height:`${visible ? endHeight : 0}px`,marginBottom:`${visible?endMargin:0}px`,opacity:visible?1:0}]
     : [{opacity,transform:visible?'translateY(5px) scale(.985)':'translateY(0) scale(1)'},{opacity:visible?1:0,transform:visible?'translateY(0) scale(1)':'translateY(5px) scale(.985)'}];
@@ -35,7 +40,7 @@ export async function show(element, visible, {collapse = false, duration = 240} 
   if(collapse)element.style.overflow='hidden';
   try{await animation.finished;}catch{return;}
   if(active.get(element)!==animation)return;
-  element.hidden=!visible;element.inert=!visible;
+  setHidden(element,!visible);element.inert=!visible;
   animation.cancel();active.delete(element);
   if(collapse){element.style.removeProperty('height');element.style.removeProperty('overflow');}
 }

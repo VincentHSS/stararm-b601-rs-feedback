@@ -253,3 +253,8 @@ button{position:relative}
 .scale-menu>button:hover,.scale-menu>button:focus-visible{background:#f4f7fd;color:#3569bd;outline-offset:-2px}
 .scale-menu>button[aria-selected=true]:after{content:'';width:4px;height:4px;border-radius:50%;background:var(--blue)}
 @media(max-width:600px){.scale-trigger{font-size:9px;padding:4px 6px;gap:4px}}
+.chart-legend button i{width:6px;height:6px}
+.chart-legend button[aria-pressed=true]{color:var(--curve);background:color-mix(in srgb,var(--curve) 9%,white)}
+.chart-legend button:hover{color:var(--curve)}
+.chart-tooltip{border-left:3px solid var(--curve,#2563eb)}
+.joint-name>span{width:5px;height:5px}
