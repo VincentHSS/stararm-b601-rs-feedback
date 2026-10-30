@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stararm-rs-feedback"
-version = "0.5.4"
+version = "0.6.0"
 description = "StarArm 102 load damping and stall holding for Seeed B601-RS LeRobot teleoperation"
 requires-python = ">=3.10"
 dependencies = ["python-can>=4.2,<5"]
