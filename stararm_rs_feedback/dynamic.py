@@ -76,7 +76,11 @@ POLICY = dict(
     startup_s=.25,              # 初次启动或重置后，暂不输出的初始化时间。
     source_age_s=.15,           # CAN 数据允许的最大年龄，超时释放全部普通阻尼。
     gap_s=.25,                  # 更新/样本允许的最大间隔，超时重新初始化。
-    # 臂部模型运动范围（rad/s、rad/s²）：超出后释放臂部普通阻尼。
+    # 临时关闭“模型运动超范围 -> 全臂清零并重新等待启动”。
+    # False 时仍持续计算动态残差；不改变 CAN 时效、故障、位置跳变或限位检查。
+    # 恢复旧行为时改为 True，并同步本地 feedback.rs-dynamic.json 的同名字段。
+    arm_motion_range_reset=False,
+    # 以下是旧模型重置阈值（rad/s、rad/s²），仅上述开关为 True 时生效。
     max_speed_rad_s=2.,
     max_acceleration_rad_s2=25.,
     # 功率变化速率（mW/s），臂部与夹爪共用：调大分别让增阻/释放更快。
@@ -303,7 +307,8 @@ class DynamicObserver:
             acceleration=(self.velocity[i]-prior)/h
             self.acceleration[i]+=h/(POLICY['acceleration_filter_s']+h)*(acceleration-self.acceleration[i])
         self.previous_q=list(q);self.previous_times=list(times)
-        if (max(abs(x) for x in [*v[:6],*self.velocity[:6]])>POLICY['max_speed_rad_s']
+        if POLICY['arm_motion_range_reset'] and (
+                max(abs(x) for x in [*v[:6],*self.velocity[:6]])>POLICY['max_speed_rad_s']
                 or max(abs(x) for x in self.acceleration[:6])>POLICY['max_acceleration_rad_s2']):
             self._invalidate_arm('motion exceeds dynamic estimator range')
             return self.loads
@@ -374,6 +379,9 @@ class DynamicSession(Session):
                         'no stationary window or 3s load latch. Fixed URDF gravity/inertia model, '
                         'gripper uses motor torque; friction/model error remains. Independent stall HOLD stays at 1500mW. '
                         'Leader output %s.',self.cfg.power_max_mw,'ENABLED' if self.enabled else 'DISABLED')
+            if not POLICY['arm_motion_range_reset']:
+                log.warning('Arm motion-range reset DISABLED: speed/acceleration thresholds no longer '
+                            'clear ordinary damping. CAN freshness/faults, discontinuities and joint limits remain active.')
             return result
         except BaseException:
             self._skip_fault_zero();self.close();raise
