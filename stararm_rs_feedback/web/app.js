@@ -7,7 +7,7 @@ import {buttonContent} from './icons.js';
 
 const $=id=>document.getElementById(id);
 const names=['底座回转','肩部俯仰','肘部俯仰','腕部俯仰','腕部偏转','腕部旋转','夹爪'];
-const colors=['#2563eb','#5b8fed','#8cafe9','#253754','#6c7d99','#9caabe','#b1c2df'];
+const colors=['#2563eb','#d97706','#0d9488','#7c3aed','#c2417e','#4d7c0f','#64748b'];
 let token='',settings=null,boot=null,dirty=false,selected=0,latest=null,latestStatus=null;
 let replay=null,replayIndex=0,replayTimer=null,history=[],lastHistory=null,busy=false,logOpen=false,networkFailed=false;
 const fmt=(v,n=2)=>typeof v==='number'&&Number.isFinite(v)?v.toFixed(n):'—';
@@ -220,8 +220,9 @@ function drawTrend(){
   for(const value of [-range,0,range]){const y=toY(value);ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(right,y);ctx.stroke();ctx.fillText(value.toFixed(1),5,y+3);}
   if(history.length<2){ctx.fillText('等待关节数据',left+9,mid-8);return;}
   const end=history.at(-1).time,start=end-30,toX=time=>left+(time-start)/30*(right-left);
-  colors.forEach((color,i)=>{
-    ctx.beginPath();ctx.strokeStyle=i===selected?'#2563eb':color;ctx.lineWidth=i===selected?1.8:1;ctx.globalAlpha=i===selected?1:.42;let connected=false;
+  const order=colors.map((_,i)=>i).filter(i=>i!==selected);order.push(selected);
+  order.forEach(i=>{const color=colors[i];
+    ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=i===selected?2.2:1.25;ctx.globalAlpha=i===selected?1:.78;let connected=false;
     for(const point of history){const value=point.torque[i];if(!finite(value)){connected=false;continue;}const x=toX(point.time),y=toY(value);if(connected)ctx.lineTo(x,y);else ctx.moveTo(x,y);connected=true;}
     ctx.stroke();
   });ctx.globalAlpha=1;
@@ -230,8 +231,8 @@ function drawTrend(){
     const point=history.reduce((nearest,p)=>Math.abs(p.time-time)<Math.abs(nearest.time-time)?p:nearest,history[0]);
     const value=point.torque[selected],x=toX(point.time);
     ctx.strokeStyle='#c9d7ed';ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke();ctx.setLineDash([]);
-    if(finite(value)){ctx.fillStyle='#2563eb';ctx.beginPath();ctx.arc(x,toY(value),3,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();}
-    const tip=$('trendTooltip');tip.replaceChildren();const title=document.createElement('b'),subtitle=document.createElement('span');
+    if(finite(value)){ctx.fillStyle=colors[selected];ctx.beginPath();ctx.arc(x,toY(value),3,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();}
+    const tip=$('trendTooltip');tip.style.setProperty('--curve',colors[selected]);tip.replaceChildren();const title=document.createElement('b'),subtitle=document.createElement('span');
     title.textContent=`J${selected+1}  ${fmt(value)} N·m`;subtitle.textContent=`${replay?'历史回放':'历史采样'}  ${fmt(end-point.time,1)} s 前`;tip.append(title,subtitle);
     tip.style.left=`${Math.max(8,Math.min(width-122,chartHover.x-50))}px`;tip.style.top='5px';
     if(tip.hidden||tip.inert)Motion.show(tip,true,{duration:160});

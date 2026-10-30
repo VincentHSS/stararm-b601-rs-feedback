@@ -1,40 +1,25 @@
-# Star Arm 102 interface
+# 界面实现
 
-The 0.6.0 interface uses white surfaces, black primary type/actions, and blue
-selection and connection feedback. Amber and red indicate torque magnitude or
-exceptional states. The Fashionstar brand mark retains its supplied colors.
+Star Arm 102 工作台采用白色界面、黑色主操作和蓝色交互反馈。曲线颜色区分关节，模型受力颜色表示扭矩幅值，二者使用不同的视觉编码。
 
-Interaction code in `motion.js` is original native JavaScript. Design references:
+## 交互
 
-- [beUI](https://beui.dev/) — shared selection indicators and tactile buttons
-- [Transitions.dev](https://transitions.dev/) — layout resizing, content swaps and panel exits
-- [shadcn/ui](https://ui.shadcn.com/) — restrained component hierarchy
-- [Rare UI](https://rareui.com/) — interaction reference
+工作台、调校和日志采用标签视图。完整视图切换通过 Web Animations 处理位置、尺寸和透明度变化，保留真实 DOM 以维持操作响应；局部内容替换支持 View Transition，并提供兼容过渡。
 
-No paid component source is bundled. The UI does not require React, a build step,
-an external font, a remote icon CDN, or an online component service at runtime.
+按钮、菜单、诊断区、日志、提示、加载和标注使用统一的进入 / 退出生命周期。连续操作会取消旧动画并保留最后状态。动效通常为 160–420 ms，支持 `prefers-reduced-motion`。
 
-`icons.svg` contains selected SVG paths from the official Lucide repository:
-<https://github.com/lucide-icons/lucide/tree/main/icons>
-Its ISC/MIT notices are in `vendor/LICENSE-lucide.txt`.
-The supplied Fashionstar mark has its own notice in `brand/NOTICE.txt`.
+实时扭矩数值直接显示最新反馈，不做数值插值。数据失效时立即清空图上读数；模型姿态、材质、标签位置和相机复位仅作视觉平滑，不改变设备命令。
 
-Motion uses a consistent 160–420 ms timing range and a common ease-out curve.
-The active tab and metric indicator retain their identity while moving and resizing.
-Full-view navigation uses a Web Animations layout morph that keeps real controls
-interactive while the outgoing panel exits. Fine-grained content replacement can
-use the native View Transition API, with the layout morph as its fallback. Interrupted transitions
-clean up outgoing inert panels and preserve the latest requested view.
-Accordions, logs, notices, labels, loading surfaces and button content have entry
-and exit lifecycles. Buttons scale slightly on hover and press. Tooltip surfaces
-appear on pointer or keyboard focus. The selected chart supports pointer inspection
-and left/right arrow keys; Escape dismisses the readout.
+标签支持方向键及 Home / End，量程菜单支持键盘选择；曲线支持指针和左右方向键查看采样，Escape 关闭读数。退出中的控件处于 inert 状态。
 
-Live state text only animates when it changes. Torque numbers remain the latest
-available reported values rather than animated numerical estimates. Invalidation
-immediately clears graph values; it does not wait for an exit animation. The 3D
-pose, label layout, camera reset and material color changes interpolate visually
-without changing any robot command or control-loop behavior.
+## 资源
 
-All motion primitives respect `prefers-reduced-motion`. Tab navigation supports
-arrow keys and Home/End; outgoing and hidden controls do not accept input.
+- Fashionstar 品牌图标：见 [brand/NOTICE.txt](brand/NOTICE.txt)
+- Lucide SVG 图标：取自 [Lucide](https://github.com/lucide-icons/lucide/tree/main/icons)，ISC / MIT 授权见 [vendor/LICENSE-lucide.txt](vendor/LICENSE-lucide.txt)
+- Three.js 和模型来源：见仓库 [NOTICE.md](../../NOTICE.md)
+
+网页资源随安装包提供，不依赖远程字体、图标 CDN 或在线组件服务。
+
+## 参考
+
+交互设计参考 [beUI](https://beui.dev/)、[Transitions.dev](https://transitions.dev/)、[shadcn/ui](https://ui.shadcn.com/) 和 [Rare UI](https://rareui.com/)。动效逻辑位于 `motion.js`，未引入上述项目的付费组件。
