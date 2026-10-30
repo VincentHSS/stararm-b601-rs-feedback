@@ -69,7 +69,8 @@
     "max_speed_rad_s": 2.0,
     "max_acceleration_rad_s2": 25.0,
     "power_rise_mw_s": 5000.0,
-    "power_fall_mw_s": 10000.0
+    "power_fall_mw_s": 10000.0,
+    "arm_motion_range_reset": false
   },
   "limitation": "Template only. Generate a local bound spec with stararm_rs_feedback.bind using your existing follower calibration; no physical calibration is performed."
 }

@@ -1,16 +1,24 @@
 # StarArm 102 + B601-RS 动态力反馈与本地网页
 
-适配 **StarArm 102 Leader + Seeed reBot B601 RobStride 从臂**，复用 Seeed LeRobot 官方设备插件。0.5.1 提供随当前负载变化的主臂阻尼、本地网页调参、RS 3D 姿态、七轴扭矩/Iq 电流及 Leader 请求状态。
+适配 **StarArm 102 Leader + Seeed reBot B601 RobStride 从臂**，复用 Seeed LeRobot 官方设备插件。0.5.2 提供随当前负载变化的主臂阻尼、本地网页调参、RS 3D 姿态、七轴扭矩/Iq 电流及 Leader 请求状态。
 
 J1–J5 和夹爪参与普通动态阻尼，J6 普通阻尼关闭；默认每轴上限 1200 mW，可选 400–1500 mW。J1 只按自身回转负载判断。堵转 HOLD 独立，可对全部关节请求 1500 mW。这里的 mW 是 Leader 请求功率，不是实测阻力；扭矩/电流不能直接换算公斤。
+
+## 0.5.2 持续运动时保持阻尼计算
+
+临时关闭 `POLICY['arm_motion_range_reset']`：超过旧的臂部速度/加速度模型阈值时，继续按当前 RS 状态计算残差和平滑功率，不再全臂清零并重新初始化。夹爪策略、各轴普通功率上限和独立 HOLD 不变。CAN 时效、连续 Leader 缺帧超时、故障、温度、位置跳变、限位和近零位模型检查继续生效。
+
+同一段约 65 秒、1947 帧日志离线回放中，运动超范围引起的骤降由 5 次降至 0 次，总骤降由 8 次降至 3 次；剩余来自限位/近零位。148 项离线测试通过。用户已反馈本地试用可用，仍未进行长期稳定性或外力计量验证；超过原运动范围时模型误差可能增大。
+
+本次只更新源码、测试及文本说明，`dist/` 中历史 wheel 保持原样。请按下方命令从源码安装 0.5.2。升级已有本机绑定配置时，仅在其 `policy` 中补上 `"arm_motion_range_reset": false`，保留原有签名、校准和其他字段；全新使用者按“首次离线绑定”生成配置即可。恢复旧运动重置行为时，将 `dynamic.py` 和本机绑定配置中的这个字段同时改为 `True` / `true`。
 
 ## 0.5.1 修复带载时反复松开
 
 旧版把某个 Leader 轴短暂不可靠读数当成全轴动态模型失效，所有阻尼清零后重新初始化。新版在此期间暂停向从臂发新目标，同时继续用新鲜 RS 状态更新阻尼；卸载时功率继续下降，不锁住旧负载。缺帧不累计堵转或解除已有 HOLD。
 
-持续 Leader 缺帧 0.25 秒仍退出释放。CAN 时效、故障、温度、各轴限位及模型运动范围检查保留。距本轴软件限位小于 2° 时释放该轴，离开到 3° 后恢复；J2/J3 电机角均小于 3° 时暂停 J2–J5 模型反馈，任一达到 5° 后恢复。保护性释放仍可能发生。
+持续 Leader 缺帧 0.25 秒仍退出释放。CAN 时效、故障、温度和各轴限位检查保留。距本轴软件限位小于 2° 时释放该轴，离开到 3° 后恢复；J2/J3 电机角均小于 3° 时暂停 J2–J5 模型反馈，任一达到 5° 后恢复。保护性释放仍可能发生。
 
-软件测试与离线日志回放通过；实际带载手感仍需用户确认。URDF 自重/惯性估计含摩擦与模型偏差，不能保证全姿态空载完全无阻力，也不是精确外力反射。详见 [VALIDATION.md](VALIDATION.md)。
+软件测试与离线日志回放通过，用户已反馈本地试用可用。URDF 自重/惯性估计含摩擦与模型偏差，不能保证全姿态空载完全无阻力，也不是精确外力反射。详见 [VALIDATION.md](VALIDATION.md)。
 
 ## 安装
 
@@ -21,10 +29,10 @@ git clone https://github.com/VincentHSS/stararm-b601-rs-feedback.git
 cd stararm-b601-rs-feedback
 conda activate lerobot
 python -m pip install --no-deps dist/motorbridge_smart_servo-0.0.4+rsfix1-*.whl
-python -m pip install --no-deps dist/stararm_rs_feedback-0.5.1-py3-none-any.whl
+python -m pip install --no-deps .
 ```
 
-所附主臂 SDK wheel 适用于 Linux x86_64、glibc >=2.34、Python >=3.9；修复已接受零度反复被拒绝的问题，仍保留校验和、缺包及零跳变确认。其他平台见 [sdk-fix/README.md](sdk-fix/README.md)。设备插件仍由教程环境提供；如缺 python-can，单独安装 `python-can>=4.2,<5`。从源码安装本包可用 `python -m pip install --no-deps .`。
+所附主臂 SDK wheel 适用于 Linux x86_64、glibc >=2.34、Python >=3.9；修复已接受零度反复被拒绝的问题，仍保留校验和、缺包及零跳变确认。其他平台见 [sdk-fix/README.md](sdk-fix/README.md)。设备插件仍由教程环境提供；如缺 python-can，单独安装 `python-can>=4.2,<5`。本包 0.5.2 从当前源码安装；`dist/` 内旧 0.5.1 wheel 没有本次改动。
 
 使用的外置设备类型为 `rebot_arm_102_leader` 与 `seeed_b601_rs_follower`，不适用于 LeRobot 内置的同名近似插件或 B601-DM。
 
@@ -70,10 +78,9 @@ sudo ip link set can0 up
 
 ```bash
 bash run_force_feedback.sh          # 默认 1200 mW
-bash run_force_feedback.sh 1500     # 普通阻尼上限 1500 mW
 ```
 
-优先在网页修改参数；终端脚本的默认上限在 `run_force_feedback.sh`。每轴死区/标尺及默认策略在 `stararm_rs_feedback/dynamic.py` 的 `POLICY`，均有中文注释。直接改默认策略时必须同步绑定 spec 的 `policy`；严格匹配会拒绝不一致配置。网页参数单独持久化，不要求改源码/JSON。HOLD 上限由 `config.py` 的 `hold_mw` 决定，和普通上限独立。详见 [DYNAMIC.md](DYNAMIC.md)。
+上面的启动命令与 `bash run_force_feedback.sh 1500`（1500 mW 上限）任选一条。优先在网页修改参数；终端脚本的默认上限在 `run_force_feedback.sh`。每轴死区/标尺及默认策略在 `stararm_rs_feedback/dynamic.py` 的 `POLICY`，均有中文注释。直接改默认策略时必须同步绑定 spec 的 `policy`；严格匹配会拒绝不一致配置。网页参数单独持久化，不要求改源码/JSON。HOLD 上限由 `config.py` 的 `hold_mw` 决定，和普通上限独立。详见 [DYNAMIC.md](DYNAMIC.md)。
 
 ## 离线测试
 
