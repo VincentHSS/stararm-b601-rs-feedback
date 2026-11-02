@@ -1,29 +1,32 @@
-# Star Arm 102 力反馈工作台
+# Star Arm 102 Force Feedback Workbench
 
-面向 **Star Arm 102 Leader + Seeed reBot B601 RobStride 从臂**的本地遥操作与力反馈工具。支持动态阻尼、堵转保持、三维姿态显示和网页调参。
+<sub>**English** / [简体中文](README.zh.md)</sub>
 
-当前版本 **0.6.1** · [下载安装包](https://github.com/VincentHSS/stararm-b601-rs-feedback/releases/latest) · [更新记录](CHANGELOG.md)
+Local teleoperation and force feedback for a **Star Arm 102 Leader + Seeed reBot B601 RobStride follower**. Includes dynamic damping, stall holding, a 3D pose view and browser settings.
 
-## 主要功能
+Current source version **0.6.2** · Install from this source tree; existing Releases do not contain this update · [Change history (Chinese)](CHANGELOG.md)
 
-- **动态力反馈**：根据从臂当前负载调整主臂阻尼，支持独立堵转 HOLD
-- **实时工作台**：三维模型、七轴状态和扭矩趋势同屏显示
-- **图上受力**：关节扭矩数值与连杆着色，支持电机扭矩、模型剩余力矩两种视图
-- **七轴曲线**：各轴独立配色，支持关节联动、采样读数和历史日志回放
-- **在线调参**：逐轴设置功率上限、死区、运动余量、滤波和响应速度
-- **本地运行**：网页、模型、图标和 Three.js 均随包提供，无需外部 CDN
+## Features
 
-J1–J5 和夹爪参与普通动态阻尼，J6 普通阻尼关闭。普通阻尼总上限默认 1200 mW，可设为 400–1500 mW；HOLD 独立，可对全部关节请求 1500 mW。
+- **Dynamic feedback**: Leader damping tracks the follower load; stall HOLD works independently
+- **Live workbench**: 3D pose, seven joint states and torque history on one page
+- **Torque annotations**: numeric joint labels and link colors for motor torque or model residual
+- **Seven color curves**: joint selection, sample readings and historical session replay
+- **Online settings**: shared and per joint power caps; deadzones, motion margins, torque scales and response settings are fixed displays
+- **Chinese and English**: switch with “中文 / EN”; the browser remembers the choice without changing parameter values
+- **Local operation**: the interface, models, icons and Three.js are included; no external CDN
 
-## 环境要求
+J1–J6 and the gripper support ordinary dynamic damping. J6 uses its own wrist rotation residual. The shared cap defaults to 1200 mW and accepts 400–1500 mW. Independent HOLD may request 1500 mW on every joint. A J6 cap previously saved as 0 remains disabled until raised and saved.
 
-- Linux、Python 3.12、LeRobot 及双方设备插件
-- 已完成串口、SocketCAN、方向映射和校准，基础遥操作可正常跟随
-- 桌面 Chrome / Chromium 或其他支持 WebGL 的浏览器
+## Requirements
 
-设备配置参考 [Seeed B601-RS 教程](https://wiki.seeedstudio.com/cn/rebot_arm_b601_rs_lerobot/)。本项目使用外置设备类型 `rebot_arm_102_leader` 和 `seeed_b601_rs_follower`，不适用于 B601-DM。
+- Linux, Python 3.12, LeRobot and both device plugins
+- Working serial/SocketCAN connections, correct direction mapping, valid calibration and verified basic following
+- A desktop browser with WebGL support
 
-## 安装
+See the [Seeed B601-RS guide](https://wiki.seeedstudio.com/cn/rebot_arm_b601_rs_lerobot/) for device setup. Device types are `rebot_arm_102_leader` and `seeed_b601_rs_follower`. B601-DM is not supported by this implementation.
+
+## Install
 
 ```bash
 git clone https://github.com/VincentHSS/stararm-b601-rs-feedback.git
@@ -33,38 +36,40 @@ python -m pip install --no-deps dist/motorbridge_smart_servo-0.0.4+rsfix1-*.whl
 python -m pip install --no-deps .
 ```
 
-也可从 [Releases](https://github.com/VincentHSS/stararm-b601-rs-feedback/releases) 下载当前版本 wheel 安装。`dist/` 中的 0.5.1 主程序 wheel 作为历史版本保留，升级时请使用最新 Release 或当前源码。
+Wheels in [Releases](https://github.com/VincentHSS/stararm-b601-rs-feedback/releases) and `dist/` are older versions. This update changes source only; install from the checkout as shown above.
 
-附带的主臂 SDK 修复包适用于 Linux x86_64、glibc ≥ 2.34、Python ≥ 3.9。其他平台和构建说明见 [sdk-fix/README.md](sdk-fix/README.md)。环境缺少 python-can 时，安装 `python-can>=4.2,<5`。
+The included corrected Leader SDK supports Linux x86_64, glibc ≥ 2.34 and Python ≥ 3.9. See [SDK compatibility and build instructions (Chinese)](sdk-fix/README.md) for other platforms. Install `python-can>=4.2,<5` if missing from the environment.
 
-## 首次绑定
+## First binding
 
-固定底座保持正立，末端使用原装夹爪。按实际校准文件路径生成本机配置：
+Use an upright fixed base and the stock gripper. Generate a local binding using your actual calibration path:
 
 ```bash
 python -m stararm_rs_feedback.bind \
-  --calibration /实际路径/follower1.json \
+  --calibration /actual/path/follower1.json \
   --robot-id follower1 \
   --upright-stock-gripper \
   --output feedback.rs-dynamic.json
 ```
 
-绑定过程只读取配置与既有校准，不连接设备、不重新置零，也不覆盖已有文件。校准或映射变更后需重新绑定。`feedback.rs-dynamic.example.json` 仅用于说明结构，不能直接用于硬件。
+Binding reads existing configuration and calibration without connecting hardware, setting zero or overwriting an existing file. Rebind after changing calibration or mapping. `feedback.rs-dynamic.example.json` documents the format and cannot be used directly with hardware.
 
-升级已有环境时，保留本机 `feedback.rs-dynamic.json` 和 `data/`。从 0.5.1 及更早版本升级时，在绑定配置的 `policy` 中补充 `"arm_motion_range_reset": false`，保留原有签名、校准和其他字段。
+Keep your local `feedback.rs-dynamic.json` and `data/` when upgrading. For bindings from 0.5.1 or earlier, add `"arm_motion_range_reset": false` to `policy` while retaining the signature, calibration and other fields.
 
-## 启动工作台
+When upgrading a binding from 0.6.1 or earlier to the new J6 policy, back it up and move it out of the way, then run First binding again using the same existing calibration. Binding is offline and does not recalibrate or set zero. Do not edit hashes to bypass the policy check.
+
+## Start the workbench
 
 ```bash
 conda activate lerobot
 bash run_dashboard.sh
 ```
 
-浏览器打开 <http://127.0.0.1:8765/>。需要更换端口时运行 `bash run_dashboard.sh 8766`。
+Open <http://127.0.0.1:8765/>. Use “中文 / EN” in the header to change language. To choose a different port, run `bash run_dashboard.sh 8766`.
 
-启动网页服务不会连接设备。退出其他遥操作会话后，点击“启动反馈”；“仅监测”仍会启动从臂跟随，但不向主臂发送阻尼或 HOLD。默认设备为 `can0`、`/dev/ttyUSB0`，从臂 ID 为 `follower1`，主臂 ID 为 `rebot_arm_102_leader`，控制频率为 30 Hz。
+Starting the server does not connect hardware. Exit existing terminal teleoperation sessions, then click **Start feedback**. **Monitor only** still makes the follower track the Leader, but this feedback layer sends no Leader damping or HOLD. Defaults are `can0`, `/dev/ttyUSB0`, follower ID `follower1`, Leader ID `rebot_arm_102_leader` and 30 Hz.
 
-CAN 尚未启用时，停止遥操作后按实际适配器配置：
+If CAN is down, stop teleoperation and configure your adapter:
 
 ```bash
 sudo ip link set can0 down
@@ -72,38 +77,42 @@ sudo ip link set can0 type can bitrate 1000000
 sudo ip link set can0 up
 ```
 
-网页参数保存在本机 `data/web/`。点击“保存并应用”后，以“已应用 vN”确认控制循环已接收参数。详细操作见 [WEB.md](WEB.md)。
+Only the shared and individual joint power caps are editable. Higher caps allow stronger damping; lower caps limit strength. Deadzones, motion margins, full output scales and response settings are fixed. Lowering the shared cap also lowers joint caps above it; raising it does not automatically raise individual caps. **Restore default caps** changes only power caps and preserves fixed settings.
 
-## 终端运行
+Settings are saved locally under `data/web/`. After **Save and apply**, check “Applied vN” to confirm that the control loop accepted them. See [workbench details (Chinese)](WEB.md).
+
+## Terminal operation
 
 ```bash
-bash run_force_feedback.sh       # 默认上限 1200 mW
-bash run_force_feedback.sh 1500  # 上限 1500 mW，两条命令任选其一
+bash run_force_feedback.sh       # Default cap: 1200 mW
+bash run_force_feedback.sh 1500  # Cap: 1500 mW; choose one command
 ```
 
-终端默认策略位于 `stararm_rs_feedback/dynamic.py` 的 `POLICY`。直接修改策略时，需同步本机绑定配置中的 `policy`；网页调参单独持久化，无需修改源码或绑定配置。详见 [DYNAMIC.md](DYNAMIC.md)。
+Shared damping defaults, individual caps and seven joint thresholds are grouped at the start of `stararm_rs_feedback/tuning.py`. Model/communication policy remains in `dynamic.py` under `POLICY`. If changing policy in source, also update the local binding policy. Browser power caps persist separately. See [dynamic policy details (Chinese)](DYNAMIC.md).
 
-## 使用说明
+## Operation notes
 
-- 扭矩单位为 N·m，属于电机反馈估计；Iq 为电机滤波电流。两者都不能直接换算为末端接触力或公斤数
-- 网页中的 mW 是 Leader 请求功率，不是实测阻力。曲线颜色用于区分关节，模型颜色表示显示量程内的扭矩幅值，不是安全限值
-- “停止运行”发送 SIGINT，执行正常回零或卸力清理。操作前留出空间并支撑机械臂；关闭网页标签不会停止会话
-- 更新安装包不会替换正在运行的进程。升级后正常停止旧会话，再重启服务并刷新页面
-- CAN 时效、故障、温度、位置跳变、限位、Leader 连续缺帧及近零姿态检查保持生效。当前策略在超过旧臂部运动模型范围时继续计算阻尼，模型误差可能增大
+- N·m is estimated motor torque; Iq is filtered motor current. Neither directly measures end effector contact force or payload mass
+- mW is the requested Leader power, not measured resistance. Curve colors identify joints; model colors show torque relative to the display range, not a safety limit
+- **Stop session** sends SIGINT and performs normal homing/release cleanup. Leave room and support the arms. Closing the browser does not stop a session
+- Installing an update does not replace a running process. Stop the old session normally, restart the server and refresh the page
+- CAN freshness, faults, temperature, position jumps, limits, continuous Leader gaps and near zero pose checks remain active. Damping continues above the former arm motion model thresholds, where estimation error can increase
 
-## 测试与资料
+## Tests and resources
 
 ```bash
 python -B -m unittest discover -s tests -q
 node tests/test_torque.mjs
 node tests/test_motion.mjs
+node tests/test_presentation.mjs
+node tests/test_i18n.mjs
 ```
 
-Python 测试使用设备替身与伪终端，完整拟合测试需要 NumPy，原生传输测试需要修复版 SDK。当前版本的验证范围、历史回放记录和真机验证边界见 [VALIDATION.md](VALIDATION.md)。
+Python tests use device doubles and pseudo terminals. Full fitting tests need NumPy; native transport tests need the corrected SDK. See [validation scope (Chinese)](VALIDATION.md) for historical replay results and hardware validation limits.
 
-- [网页操作](WEB.md)
-- [动态策略](DYNAMIC.md)
-- [更新记录](CHANGELOG.md)
-- [界面实现](stararm_rs_feedback/web/DESIGN.md)
-- [第三方来源与授权](NOTICE.md)
-- [Star Arm 102 原力反馈项目](https://github.com/VincentHSS/stararm102-force-feedback)
+- [Workbench guide (Chinese)](WEB.md)
+- [Dynamic policy (Chinese)](DYNAMIC.md)
+- [Change history (Chinese)](CHANGELOG.md)
+- [Interface design (Chinese)](stararm_rs_feedback/web/DESIGN.md)
+- [Third party sources and licenses](NOTICE.md)
+- [Original Star Arm 102 force feedback project](https://github.com/VincentHSS/stararm102-force-feedback)

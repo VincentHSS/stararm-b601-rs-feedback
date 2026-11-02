@@ -17,6 +17,7 @@ import time
 from urllib.parse import urlsplit
 
 from .web_settings import defaults, validate, read, atomic_json, SCALARS, ARRAYS
+from .dynamic import ACTIVE_JOINTS
 
 WEB_ROOT=Path(__file__).parent/'web'
 
@@ -40,6 +41,8 @@ class Dashboard:
             data=validate(body)
             current=self.settings()
             if data['revision']!=current['revision']:raise ValueError('参数已被其他页面修改，请刷新后重试')
+            if any(data[key]!=current[key] for key in (*SCALARS,*ARRAYS)):
+                raise ValueError('死区、运动余量、力矩标尺和响应参数为固定参数，不支持网页修改')
             data['revision']=current['revision']+1
             atomic_json(self.store/f"settings_v{data['revision']:06d}.json",data)
             atomic_json(self.settings_path,data)
@@ -181,7 +184,7 @@ def make_handler(app):
             if not self.local_request():self.send(403,{'error':'仅允许本机访问'});return
             path=urlsplit(self.path).path
             if path=='/api/bootstrap':
-                self.send(200,dict(token=app.token,settings=app.settings(),defaults=defaults(),scalars=SCALARS,arrays=ARRAYS,version='0.6.1'));return
+                self.send(200,dict(token=app.token,settings=app.settings(),defaults=defaults(),scalars=SCALARS,arrays=ARRAYS,active_joint_indices=list(ACTIVE_JOINTS),version='0.6.2'));return
             if path=='/api/state':self.send(200,app.status());return
             if path=='/api/log':self.send(200,{'text':app.logs()});return
             if path=='/api/replay':

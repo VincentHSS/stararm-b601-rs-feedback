@@ -16,6 +16,7 @@
       2,
       3,
       4,
+      5,
       6
     ],
     "deadzone_nm": [
@@ -24,7 +25,7 @@
       1.0,
       0.6,
       0.35,
-      0.0,
+      0.35,
       0.35
     ],
     "moving_margin_nm": [
@@ -33,7 +34,7 @@
       0.6,
       0.2,
       0.15,
-      0.0,
+      0.15,
       0.08
     ],
     "excess_full_scale_nm": [
@@ -45,6 +46,11 @@
       1.0,
       0.25
     ],
+    "residual_filter_s": 0.12,
+    "confirmation_s": 0.1,
+    "power_filter_s": 0.06,
+    "power_rise_mw_s": 5000.0,
+    "power_fall_mw_s": 10000.0,
     "arm_motion_margin_per_axis": true,
     "arm_motion_scale_rad_s": 0.25,
     "joint_limit_margin_deg": 2.0,
@@ -60,17 +66,12 @@
     "gripper_max_acceleration_rad_s2": 60.0,
     "velocity_filter_s": 0.06,
     "acceleration_filter_s": 0.1,
-    "residual_filter_s": 0.12,
-    "confirmation_s": 0.1,
-    "power_filter_s": 0.06,
     "startup_s": 0.25,
     "source_age_s": 0.15,
     "gap_s": 0.25,
+    "arm_motion_range_reset": false,
     "max_speed_rad_s": 2.0,
-    "max_acceleration_rad_s2": 25.0,
-    "power_rise_mw_s": 5000.0,
-    "power_fall_mw_s": 10000.0,
-    "arm_motion_range_reset": false
+    "max_acceleration_rad_s2": 25.0
   },
   "limitation": "Template only. Generate a local bound spec with stararm_rs_feedback.bind using your existing follower calibration; no physical calibration is performed."
 }
